@@ -8,14 +8,28 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
 
+    // serial port connection
+    QString portName = "ttyACM1";
 
-
-    serialModel = new QStandardItemModel(this);
-
+    serial.setPortName(portName);  // or "COM3" on Windows
+    serial.setBaudRate(QSerialPort::Baud115200);
+    serial.setDataBits(QSerialPort::Data8);
+    serial.setParity(QSerialPort::NoParity);
+    serial.setStopBits(QSerialPort::OneStop);
+    serial.setFlowControl(QSerialPort::NoFlowControl);
+    if (!serial.open(QIODevice::ReadWrite)) {
+        qCritical() << "Cannot open serial port:" << serial.errorString();
+    } else {
+        qDebug() << "Connected to" << serial.portName();
+    }
+    connect(&serial, &QSerialPort::readyRead, this, &MainWindow::onReadyRead);
+    // disconnect(&serial, &QSerialPort::readyRead, this, &MainWindow::onReadyRead);
     // refresh timer
     refreshTimer = new QTimer(this);
     connect(refreshTimer, &QTimer::timeout, this, &MainWindow::refreshWindow);
     refreshTimer->start(100);
+
+    serialModel = new QStandardItemModel(this);
 
     // list of available serial ports
     refreshSerialPorts();
@@ -54,74 +68,19 @@ void MainWindow::refreshSerialPorts()
     QStandardItem *hiddenItem1;
     QStandardItem *displayItem;
     for (const QSerialPortInfo &info : QSerialPortInfo::availablePorts()) {
+        if (info.vendorIdentifier() != 0) {
+            QString infoText = QString("%1 (%2)")
+                                   .arg(info.description())
+                                   .arg(info.vendorIdentifier(), 4, 16, QLatin1Char('0'));
 
-        if (info.vendorIdentifier() == 0)
-            continue;
+            QString displayText = QString("%1 — %2").arg(info.portName(), infoText);
+            displayItem = new QStandardItem(displayText); // shown in list
+            hiddenItem1 = new QStandardItem(info.portName()); // internal data
 
-        QString infoText = QString("%1 (%2)")
-                               .arg(info.description())
-                               .arg(info.vendorIdentifier(), 4, 16, QLatin1Char('0'));
-
-        // What user sees in QListView:
-        QString displayText = QString("%1 — %2").arg(info.portName(), infoText);
-
-        // Create items
-        displayItem = new QStandardItem(displayText); // shown in list
-        hiddenItem1 = new QStandardItem(info.portName()); // internal data
-
-        // Add row (only first column is displayed in QListView)
-
-        row << displayItem << hiddenItem1;
-        serialModel->appendRow(row);
-    }
-    displayItem = new QStandardItem("None");
-    hiddenItem1 = new QStandardItem("None");
-    row << displayItem << hiddenItem1;
-    serialModel->appendRow(row);
-}
-
-void MainWindow::on_serialListView_clicked(const QModelIndex &index)
-{
-    if(serial.isOpen()) {
-        serial.close();
-    }
-}
-
-
-void MainWindow::on_pushButton_clicked()
-{
-    MainWindow::refreshSerialPorts();
-}
-
-
-void MainWindow::on_pushButton_2_clicked()
-{
-    qint8 selected_item = 0;
-    QModelIndex selected = ui->serialListView->currentIndex();
-    QString portName = "";
-    if(selected.isValid()) {
-        ui->activePort->setText(serialModel->itemFromIndex(selected)->text());
-        portName = serialModel->item(selected.row(), 1)->text();
-
-        serial.setPortName(portName);  // or "COM3" on Windows
-        serial.setBaudRate(QSerialPort::Baud115200);
-        serial.setDataBits(QSerialPort::Data8);
-        serial.setParity(QSerialPort::NoParity);
-        serial.setStopBits(QSerialPort::OneStop);
-        serial.setFlowControl(QSerialPort::NoFlowControl);
-        if (!serial.open(QIODevice::ReadWrite)) {
-            qCritical() << "Cannot open serial port:" << serial.errorString();
-        } else {
-            qDebug() << "Connected to" << serial.portName();
+            row << displayItem << hiddenItem1;
+            serialModel->appendRow(row);
         }
-
-        connect(&serial, &QSerialPort::readyRead, this, &MainWindow::onReadyRead);
-
-
-    } else {
-        ui->activePort->setText("None");
     }
-    qDebug() << portName;
 }
 
 void MainWindow::onReadyRead() {
@@ -134,12 +93,18 @@ void MainWindow::send8symbols() {
     if(serial.isOpen()) {
         serial.write(cmd);
         serial.flush();
+        qDebug() << "send";
     }
-
 }
 
-void MainWindow::on_pushButton_3_clicked()
+void MainWindow::on_refreshPortsListButton_clicked()
 {
-    MainWindow::send8symbols();
+    MainWindow::refreshSerialPorts();
+}
+
+
+void MainWindow::on_sendDataToActivePortButton_clicked()
+{
+    send8symbols();
 }
 
