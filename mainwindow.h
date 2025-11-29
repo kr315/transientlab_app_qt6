@@ -3,8 +3,9 @@
 
 #include <QMainWindow>
 #include <QStringListModel>
-
 #include <QTimer>
+
+#include "serial_connection.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -22,19 +23,25 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_actionClose_triggered();
     void refreshWindow();
 
-    void refreshSerialPorts();
-    void onReadyRead();
-    void send8symbols();
+    void on_actionClose_triggered();
 
     void on_refreshPortsListButton_clicked();
     void on_sendDataToActivePortButton_clicked();
 
+    void on_setActivePortButton_clicked();
+
+    void onSerialDataReceived(const QString &data);
+
+    void on_sendEndToActivePortButton_clicked();
+
 private:
     Ui::MainWindow *ui;
     QTimer *refreshTimer;
+    SerialConnection *serialConn;
+    QStandardItemModel *portsModel;
+
 
 
 };

@@ -30,6 +30,8 @@ qt_add_executable(transientlab_app
         ${PROJECT_SOURCES}
         serial_connection.cpp
         serial_connection.h
+
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET transientlab_app APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
