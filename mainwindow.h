@@ -36,6 +36,8 @@ private slots:
 
     void on_sendEndToActivePortButton_clicked();
 
+    void on_tabWidget_currentChanged(int index);
+
 private:
     Ui::MainWindow *ui;
     QTimer *refreshTimer;

@@ -21,13 +21,6 @@ public:
     QByteArray send8symbols();
     QByteArray sendData(QString data);
 
-    enum {
-        OFFLINE = 0,
-        CONNECTED,
-        INITIALIZED,
-        ONLINE
-    } comm_states;
-
 signals:
     void dataReceived(const QString &data);
     void portOpened(const QString &portName);

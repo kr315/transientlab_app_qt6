@@ -84,3 +84,12 @@ void MainWindow::on_sendEndToActivePortButton_clicked()
     qDebug() << "send endline";
 }
 
+
+
+
+void MainWindow::on_tabWidget_currentChanged(int index)
+{
+
+    qDebug() << DevicesList[index];
+}
+

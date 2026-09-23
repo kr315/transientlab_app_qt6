@@ -30,6 +30,8 @@ qt_add_executable(transientlab_app
         ${PROJECT_SOURCES}
         serial_connection.cpp
         serial_connection.h
+        transientlab_devices.h
+        transientlab_devices.cpp
 
 
     )

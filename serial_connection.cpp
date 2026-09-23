@@ -13,8 +13,6 @@ SerialConnection::SerialConnection(QObject *parent)
     serial.setParity(QSerialPort::NoParity);
     serial.setStopBits(QSerialPort::OneStop);
     serial.setFlowControl(QSerialPort::NoFlowControl);
-
-    comm_states = OFFLINE;
 }
 
 QStandardItemModel* SerialConnection::listAvailablePorts()
@@ -46,7 +44,6 @@ QStandardItemModel* SerialConnection::listAvailablePorts()
 bool SerialConnection::connectToPort(const QString &portName)
 {
     if (serial.isOpen()) {
-        comm_states = OFFLINE;
         serial.close();
     }
 
@@ -58,7 +55,6 @@ bool SerialConnection::connectToPort(const QString &portName)
     } else {
         connect(&serial, &QSerialPort::readyRead, this, &SerialConnection::onReadyRead);
         emit portOpened(portName);
-        comm_states = ONLINE;
         return true;
     }
 }
@@ -69,7 +65,6 @@ bool SerialConnection::disconnectPort()
         disconnect(&serial, &QSerialPort::readyRead, this, &SerialConnection::onReadyRead);
         serial.close();
         emit portClosed();
-        comm_states = OFFLINE;
         return true;
     } else {
         return false;
@@ -104,10 +99,11 @@ void SerialConnection::onReadyRead()
     rxBuffer.append(serial.readAll());
 
     const char START = '@';
+    const char PARAMETER = ':';
+    const char VALUE = '=';
     const char END   = '!';
     const int MAX_BUFFER = 256;
 
-    // Clear oversized buffer
     if (rxBuffer.size() > MAX_BUFFER) {
         qWarning() << "Serial buffer cleared (no valid frame within 256 bytes)";
         rxBuffer.clear();
